@@ -11,16 +11,7 @@ export default function UserDashboardPage() {
   const router = useRouter();
 
   /* 🔥 CAMERA + MIC FORCE OFF (DO NOT REMOVE) */
-  useEffect(() => {
-    navigator.mediaDevices
-      .getUserMedia({ audio: true, video: true })
-      .then(stream => {
-        stream.getTracks().forEach(track => track.stop());
-      })
-      .catch(() => {
-        // No active media — safe to ignore
-      });
-  }, []);
+  
 
   /* AUTH GUARD */
   useEffect(() => {
