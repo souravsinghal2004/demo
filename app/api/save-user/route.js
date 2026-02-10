@@ -1,33 +1,28 @@
-import db from "@/lib/db";
 import { NextResponse } from "next/server";
+import { connectDB } from "@/lib/mongo";
+import User from "@/models/User";
 
 export async function POST(req) {
   try {
-    const { clerkId, name, email, role } = await req.json();
+    await connectDB();
 
-    if (!clerkId || !email) {
-      return NextResponse.json({ error: "Missing data" }, { status: 400 });
+    const body = await req.json();
+    const { clerkId, name, email, role } = body;
+
+    const existing = await User.findOne({ clerkId });
+
+    if (!existing) {
+      await User.create({
+        clerkId,
+        name,
+        email,
+        role,
+      });
     }
 
-    // Check if user already exists
-    const [rows] = await db.query(
-      "SELECT * FROM users WHERE clerk_id = ?",
-      [clerkId]
-    );
-
-    if (rows.length === 0) {
-      // Insert new user
-      await db.query(
-        "INSERT INTO users (clerk_id, name, email, role) VALUES (?, ?, ?, ?)",
-        [clerkId, name, email, role]
-      );
-
-      return NextResponse.json({ message: "User saved" });
-    }
-
-    return NextResponse.json({ message: "User already exists" });
-  } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.log(err);
+    return NextResponse.json({ error: "DB error" }, { status: 500 });
   }
 }
