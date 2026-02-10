@@ -1,17 +1,6 @@
-import mongoose from "mongoose";
+import { connectDB } from "../../../lib/mongo";
 
-const MONGO_URI = process.env.MONGO_URI;
-
-async function connectDB() {
-  if (mongoose.connection.readyState >= 1) return;
-
-  return mongoose.connect(MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  });
-}
-
-export async function GET(req, res) {
+export async function GET(req) {
   try {
     await connectDB();
     return new Response(JSON.stringify({ status: "DB connected ✅" }), {
@@ -19,8 +8,7 @@ export async function GET(req, res) {
       headers: { "Content-Type": "application/json" },
     });
   } catch (err) {
-    console.log(err);
-    return new Response(JSON.stringify({ status: "DB connection failed ❌", error: err.message }), {
+    return new Response(JSON.stringify({ status: "DB failed ❌", error: err.message }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
     });
