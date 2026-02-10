@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import User from "../../../models/User";  // relative path
-import { connectDB } from "../../../lib/mongo"; // relative path to mongo connection
+import User from "../../models/User";
+import { connectDB } from "../../lib/mongo";
+
 
 export async function POST(req) {
   try {
