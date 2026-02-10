@@ -2,11 +2,14 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import * as faceapi from "face-api.js";
 
 export default function LiveInterviewPage() {
   const router = useRouter();
 
   const videoRef = useRef(null);
+  const videoContainerRef = useRef(null);
+
   const streamRef = useRef(null);
   const recorderRef = useRef(null);
   const audioChunksRef = useRef([]);
@@ -24,12 +27,20 @@ export default function LiveInterviewPage() {
     if (initializedRef.current) return;
     initializedRef.current = true;
 
-    initMedia();
-    addAI("Please introduce yourself.");
-    speakAI("Please introduce yourself.");
+    (async () => {
+      await initMedia(); // waits for stream
+      addAI("Please introduce yourself.");
+      speakAI("Please introduce yourself.");
+
+      // Face detection starts after stream is ready
+      await loadModels();
+      detectFace();
+    })();
 
     return cleanup;
   }, []);
+
+  /* ---------------- MEDIA ---------------- */
 
   async function initMedia() {
     const stream = await navigator.mediaDevices.getUserMedia({
@@ -44,22 +55,66 @@ export default function LiveInterviewPage() {
     streamRef.current = stream;
     videoRef.current.srcObject = stream;
 
+    // Start recording AFTER stream is set
     startRecording();
   }
+
+  /* ---------------- FACE DETECTION ---------------- */
+
+  async function loadModels() {
+    const MODEL_URL = "/models"; // face-api.js models in public/models
+    await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+  }
+
+  const detectFace = async () => {
+    if (!videoRef.current) return;
+
+    const detect = async () => {
+      const detections = await faceapi.detectAllFaces(
+        videoRef.current,
+        new faceapi.TinyFaceDetectorOptions()
+      );
+
+      if (!videoContainerRef.current) return;
+
+      if (detections.length === 0) {
+        videoContainerRef.current.style.border = "5px solid red";
+      } else {
+        const box = detections[0].box;
+        const w = videoRef.current.videoWidth;
+        const h = videoRef.current.videoHeight;
+
+        if (
+          box.x < 0 ||
+          box.y < 0 ||
+          box.x + box.width > w ||
+          box.y + box.height > h
+        ) {
+          videoContainerRef.current.style.border = "5px solid red";
+        } else {
+          videoContainerRef.current.style.border = "5px solid green";
+        }
+      }
+
+      requestAnimationFrame(detect);
+    };
+
+    detect();
+  };
 
   /* ---------------- SPEECH ---------------- */
 
   function speakAI(text) {
     const u = new SpeechSynthesisUtterance(text);
     const voices = speechSynthesis.getVoices();
-
     const maleVoice =
-      voices.find(v =>
-        v.lang.startsWith("en") &&
-        (v.name.toLowerCase().includes("male") ||
-          v.name.toLowerCase().includes("david") ||
-          v.name.toLowerCase().includes("google"))
-      ) || voices.find(v => v.lang.startsWith("en"));
+      voices.find(
+        (v) =>
+          v.lang.startsWith("en") &&
+          (v.name.toLowerCase().includes("male") ||
+            v.name.toLowerCase().includes("david") ||
+            v.name.toLowerCase().includes("google"))
+      ) || voices.find((v) => v.lang.startsWith("en"));
 
     if (maleVoice) u.voice = maleVoice;
 
@@ -70,11 +125,9 @@ export default function LiveInterviewPage() {
     speechSynthesis.speak(u);
   }
 
-  const addAI = text =>
-    setMessages(m => [...m, { sender: "ai", text }]);
-
-  const addUser = text =>
-    setMessages(m => [...m, { sender: "user", text }]);
+  const addAI = (text) => setMessages((m) => [...m, { sender: "ai", text }]);
+  const addUser = (text) =>
+    setMessages((m) => [...m, { sender: "user", text }]);
 
   /* ---------------- RECORDING ---------------- */
 
@@ -89,7 +142,7 @@ export default function LiveInterviewPage() {
       console.log("🎙️ Recording started");
     };
 
-    recorder.ondataavailable = e => {
+    recorder.ondataavailable = (e) => {
       if (e.data.size > 0) audioChunksRef.current.push(e.data);
     };
 
@@ -106,11 +159,10 @@ export default function LiveInterviewPage() {
         return;
       }
 
-      // Popup + timer
       setShowPopup(true);
       setTimer(0);
       timerRef.current = setInterval(
-        () => setTimer(t => +(t + 0.1).toFixed(1)),
+        () => setTimer((t) => +(t + 0.1).toFixed(1)),
         100
       );
 
@@ -158,7 +210,7 @@ export default function LiveInterviewPage() {
     }
 
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     }
 
@@ -174,7 +226,7 @@ export default function LiveInterviewPage() {
   function cleanup() {
     clearInterval(timerRef.current);
     recorderRef.current?.stop();
-    streamRef.current?.getTracks().forEach(t => t.stop());
+    streamRef.current?.getTracks().forEach((t) => t.stop());
   }
 
   /* ---------------- UI ---------------- */
@@ -195,7 +247,10 @@ export default function LiveInterviewPage() {
         </div>
 
         {/* VIDEO */}
-        <div className="border rounded-xl p-2">
+        <div
+          ref={videoContainerRef}
+          className="border-4 rounded-xl p-2 border-green-500 transition-all duration-200"
+        >
           <video
             ref={videoRef}
             autoPlay
@@ -218,9 +273,7 @@ export default function LiveInterviewPage() {
               >
                 <div
                   className={`px-3 py-2 rounded-xl max-w-[75%] ${
-                    m.sender === "ai"
-                      ? "bg-gray-800"
-                      : "bg-blue-600"
+                    m.sender === "ai" ? "bg-gray-800" : "bg-blue-600"
                   }`}
                 >
                   {m.text}

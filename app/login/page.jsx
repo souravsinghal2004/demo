@@ -14,11 +14,31 @@ export default function UserDashboardPage() {
   
 
   /* AUTH GUARD */
-  useEffect(() => {
-    if (isLoaded && !isSignedIn) {
-      router.replace("/");
-    }
-  }, [isLoaded, isSignedIn, router]);
+  /* AUTH GUARD */
+useEffect(() => {
+  if (isLoaded && !isSignedIn) {
+    router.replace("/");
+  }
+}, [isLoaded, isSignedIn, router]);
+
+/* SAVE USER TO MYSQL */
+useEffect(() => {
+  if (!isLoaded || !isSignedIn || !user) return;
+
+  fetch("/api/save-user", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+        clerkId: user.id,
+      name: `${user.firstName || ""} ${user.lastName || ""}`,
+      email: user.primaryEmailAddress?.emailAddress,
+      role: "CANDIDATE",
+    }),
+  });
+}, [isLoaded, isSignedIn, user]);
+
 
   if (!isLoaded || !isSignedIn) return null;
 
