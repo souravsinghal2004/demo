@@ -6,23 +6,23 @@ export async function POST(req) {
   try {
     await connectDB();
 
-    const body = await req.json();
-    const { clerkId, name, email, role } = body;
+    const { clerkId, name, email, role } = await req.json();
 
-    const existing = await User.findOne({ clerkId });
-
-    if (!existing) {
-      await User.create({
-        clerkId,
-        name,
-        email,
-        role,
-      });
-    }
+    await User.updateOne(
+      { clerkId },
+      {
+        $set: {
+          name,
+          email,
+          role,
+        },
+      },
+      { upsert: true }
+    );
 
     return NextResponse.json({ success: true });
   } catch (err) {
-    console.log(err);
-    return NextResponse.json({ error: "DB error" }, { status: 500 });
+    console.log("ERROR:", err);
+    return NextResponse.json({ error: "Failed" }, { status: 500 });
   }
 }
