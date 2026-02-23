@@ -5,313 +5,452 @@ import { useRouter } from "next/navigation";
 import * as faceapi from "face-api.js";
 
 export default function LiveInterviewPage() {
-  const router = useRouter();
 
-  const videoRef = useRef(null);
-  const videoContainerRef = useRef(null);
+const router = useRouter();
 
-  const streamRef = useRef(null);
-  const recorderRef = useRef(null);
-  const audioChunksRef = useRef([]);
-  const timerRef = useRef(null);
-  const initializedRef = useRef(false);
+const [messages, setMessages] = useState([]);
+const [recording, setRecording] = useState(false);
+const [showPopup, setShowPopup] = useState(false);
+const [timer, setTimer] = useState(0);
 
-  const [messages, setMessages] = useState([]);
-  const [recording, setRecording] = useState(false);
-  const [showPopup, setShowPopup] = useState(false);
-  const [timer, setTimer] = useState(0);
+const questionsRef = useRef([]);
+const currentQRef = useRef(0);
+const scoresRef = useRef([]);
+const streamRef = useRef(null);
+const recorderRef = useRef(null);
+const audioChunksRef = useRef([]);
+const timerRef = useRef(null);
+const videoRef = useRef(null);
+const videoContainerRef = useRef(null);
+const isEndingRef = useRef(false);
 
-  /* ---------------- INIT ---------------- */
 
-  useEffect(() => {
-    if (initializedRef.current) return;
-    initializedRef.current = true;
+/* ================= INIT ================= */
 
-    (async () => {
-      await initMedia(); // waits for stream
-      addAI("Please introduce yourself.");
-      speakAI("Please introduce yourself.");
+useEffect(() => {
 
-      // Face detection starts after stream is ready
-      await loadModels();
-      detectFace();
-    })();
+let mounted = true;
 
-    return cleanup;
-  }, []);
+(async () => {
 
-  /* ---------------- MEDIA ---------------- */
+await initMedia();
+if (!mounted) return;
 
-  async function initMedia() {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: true,
-      audio: {
-        echoCancellation: false,
-        noiseSuppression: false,
-        autoGainControl: false,
-      },
-    });
+await loadModels();
+await loadQuestions();
+detectFace();
 
-    streamRef.current = stream;
-    videoRef.current.srcObject = stream;
+})();
 
-    // Start recording AFTER stream is set
-    startRecording();
-  }
+return () => {
+mounted = false;
+cleanup();
+};
 
-  /* ---------------- FACE DETECTION ---------------- */
+}, []);
 
-  async function loadModels() {
-    const MODEL_URL = "/models"; // face-api.js models in public/models
-    await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
-  }
 
-  const detectFace = async () => {
-    if (!videoRef.current) return;
+/* ================= LOAD QUESTIONS ================= */
 
-    const detect = async () => {
-      const detections = await faceapi.detectAllFaces(
-        videoRef.current,
-        new faceapi.TinyFaceDetectorOptions()
-      );
+async function loadQuestions() {
 
-      if (!videoContainerRef.current) return;
+const res = await fetch("/api/interview/start", {
+method: "POST",
+headers: { "Content-Type": "application/json" },
+body: JSON.stringify({ job: "backend" }),
+});
 
-      if (detections.length === 0) {
-        videoContainerRef.current.style.border = "5px solid red";
-      } else {
-        const box = detections[0].box;
-        const w = videoRef.current.videoWidth;
-        const h = videoRef.current.videoHeight;
+const data = await res.json();
 
-        if (
-          box.x < 0 ||
-          box.y < 0 ||
-          box.x + box.width > w ||
-          box.y + box.height > h
-        ) {
-          videoContainerRef.current.style.border = "5px solid red";
-        } else {
-          videoContainerRef.current.style.border = "5px solid green";
-        }
-      }
+questionsRef.current = data.questions || [];
 
-      requestAnimationFrame(detect);
-    };
+console.log("Loaded questions:", questionsRef.current.length);
 
-    detect();
-  };
+askQuestion(0);
 
-  /* ---------------- SPEECH ---------------- */
+}
 
-  function speakAI(text) {
-    const u = new SpeechSynthesisUtterance(text);
-    const voices = speechSynthesis.getVoices();
-    const maleVoice =
-      voices.find(
-        (v) =>
-          v.lang.startsWith("en") &&
-          (v.name.toLowerCase().includes("male") ||
-            v.name.toLowerCase().includes("david") ||
-            v.name.toLowerCase().includes("google"))
-      ) || voices.find((v) => v.lang.startsWith("en"));
+function askQuestion(index) {
 
-    if (maleVoice) u.voice = maleVoice;
+if (isEndingRef.current) return;
 
-    u.rate = 1;
-    u.pitch = 0.9;
-    u.volume = 1;
+if (!questionsRef.current[index]) {
+finishInterview();
+return;
+}
 
-    speechSynthesis.speak(u);
-  }
+currentQRef.current = index;
 
-  const addAI = (text) => setMessages((m) => [...m, { sender: "ai", text }]);
-  const addUser = (text) =>
-    setMessages((m) => [...m, { sender: "user", text }]);
+const question = questionsRef.current[index];
 
-  /* ---------------- RECORDING ---------------- */
+addAI(question);
 
-  function startRecording() {
-    audioChunksRef.current = [];
+speechSynthesis.cancel();
 
-    const recorder = new MediaRecorder(streamRef.current);
-    recorderRef.current = recorder;
+const utterance = new SpeechSynthesisUtterance(question);
 
-    recorder.onstart = () => {
-      setRecording(true);
-      console.log("🎙️ Recording started");
-    };
+utterance.onend = () => {
+if (!isEndingRef.current) {
+startRecording();
+}
+};
 
-    recorder.ondataavailable = (e) => {
-      if (e.data.size > 0) audioChunksRef.current.push(e.data);
-    };
+speechSynthesis.speak(utterance);
 
-    recorder.onstop = async () => {
-      setRecording(false);
-      console.log("🛑 Recording stopped");
+}
 
-      const audioBlob = new Blob(audioChunksRef.current, {
-        type: "audio/webm",
-      });
 
-      if (audioBlob.size < 2000) {
-        startRecording();
-        return;
-      }
+/* ================= CHAT ================= */
 
-      setShowPopup(true);
-      setTimer(0);
-      timerRef.current = setInterval(
-        () => setTimer((t) => +(t + 0.1).toFixed(1)),
-        100
-      );
+function addAI(text) {
+setMessages(prev => [...prev, { sender: "ai", text }]);
+}
 
-      const text = await sendToAPI(audioBlob);
+function addUser(text) {
+setMessages(prev => [...prev, { sender: "user", text }]);
+}
 
-      clearInterval(timerRef.current);
-      setShowPopup(false);
 
-      if (text) addUser(text);
+/* ================= RECORD ================= */
 
-      startRecording();
-    };
+function startRecording() {
 
-    recorder.start();
-  }
+if (!streamRef.current) return;
 
-  function stopRecording() {
-    if (recorderRef.current?.state !== "inactive") {
-      recorderRef.current.stop();
-    }
-  }
+audioChunksRef.current = [];
 
-  /* ---------------- API ---------------- */
+const audioStream = new MediaStream(
+streamRef.current.getAudioTracks()
+);
 
-  async function sendToAPI(blob) {
-    try {
-      const res = await fetch("/api/transcribe", {
-        method: "POST",
-        body: blob,
-      });
+const recorder = new MediaRecorder(audioStream);
 
-      const data = await res.json();
-      return data.text || "";
-    } catch (err) {
-      console.error("❌ Transcription failed:", err);
-      return "";
-    }
-  }
+recorderRef.current = recorder;
 
-  /* ---------------- END INTERVIEW ---------------- */
+recorder.onstart = () => setRecording(true);
 
-  function endInterview() {
-    if (recorderRef.current?.state !== "inactive") {
-      recorderRef.current.stop();
-    }
+recorder.ondataavailable = (e) => {
+if (e.data.size > 0)
+audioChunksRef.current.push(e.data);
+};
 
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
-      streamRef.current = null;
-    }
+recorder.onstop = async () => {
 
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
-    }
+setRecording(false);
 
-    router.push("/");
-  }
+const blob = new Blob(audioChunksRef.current, {
+type: "audio/webm"
+});
 
-  /* ---------------- CLEANUP ---------------- */
+if (blob.size < 1500 && !isEndingRef.current) {
+startRecording();
+return;
+}
 
-  function cleanup() {
-    clearInterval(timerRef.current);
-    recorderRef.current?.stop();
-    streamRef.current?.getTracks().forEach((t) => t.stop());
-  }
+const text = await sendToAPI(blob);
 
-  /* ---------------- UI ---------------- */
+if (text) addUser(text);
 
-  return (
-    <div className="h-screen bg-black text-white p-6 flex flex-col">
-      <h1 className="text-xl mb-4">Live Interview</h1>
+};
 
-      <div className="grid md:grid-cols-3 gap-6 flex-1">
-        {/* AI BOX */}
-        <div className="border rounded-xl p-4 flex flex-col items-center justify-center">
-          <img
-            src="/ai-avatar.png"
-            alt="AI"
-            className="w-40 h-40 object-contain mb-4"
-          />
-          <p className="text-lg font-semibold">AI Interviewer</p>
-        </div>
+recorder.start();
 
-        {/* VIDEO */}
-        <div
-          ref={videoContainerRef}
-          className="border-4 rounded-xl p-2 border-green-500 transition-all duration-200"
-        >
-          <video
-            ref={videoRef}
-            autoPlay
-            muted
-            playsInline
-            className="w-full h-full rounded object-cover scale-x-[-1]"
-          />
-        </div>
+}
 
-        {/* CHAT */}
-        <div className="border rounded-xl p-4 flex flex-col">
-          <h3 className="mb-2">Interview Chat</h3>
-          <div className="flex-1 overflow-y-auto space-y-2 text-sm">
-            {messages.map((m, i) => (
-              <div
-                key={i}
-                className={`flex ${
-                  m.sender === "ai" ? "justify-start" : "justify-end"
-                }`}
-              >
-                <div
-                  className={`px-3 py-2 rounded-xl max-w-[75%] ${
-                    m.sender === "ai" ? "bg-gray-800" : "bg-blue-600"
-                  }`}
-                >
-                  {m.text}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+function stopRecording() {
+if (recorderRef.current &&
+recorderRef.current.state !== "inactive") {
+recorderRef.current.stop();
+}
+}
 
-      {/* BUTTONS */}
-      <div className="mt-4 flex justify-between">
-        <button
-          onClick={endInterview}
-          className="px-6 py-2 rounded-md bg-red-600"
-        >
-          End Interview
-        </button>
 
-        <button
-          onClick={stopRecording}
-          className={`px-6 py-2 rounded-md ${
-            recording ? "bg-green-600" : "bg-gray-600"
-          }`}
-        >
-          Submit Audio
-        </button>
-      </div>
+/* ================= API FLOW ================= */
 
-      {/* POPUP */}
-      {showPopup && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-          <div className="bg-gray-900 px-6 py-4 rounded-xl text-center">
-            <p className="text-lg font-semibold">Processing…</p>
-            <p className="mt-2 text-sm text-gray-300">{timer}s</p>
-          </div>
-        </div>
-      )}
-    </div>
-  );
+async function sendToAPI(blob) {
+
+try {
+
+setShowPopup(true);
+setTimer(0);
+
+timerRef.current = setInterval(() => {
+setTimer(t => +(t + 0.1).toFixed(1));
+}, 100);
+
+/* ---------- TRANSCRIBE ---------- */
+
+const formData = new FormData();
+formData.append("file", blob);
+
+const res = await fetch("/api/transcribe", {
+method: "POST",
+body: formData
+});
+
+const data = await res.json();
+
+clearInterval(timerRef.current);
+setShowPopup(false);
+
+const answerText = data.text || "";
+
+if (!answerText) return "";
+
+/* ---------- SCORE ---------- */
+
+const scoreRes = await fetch("/api/interview/answer", {
+method: "POST",
+headers: { "Content-Type": "application/json" },
+body: JSON.stringify({
+question: questionsRef.current[currentQRef.current],
+answer: answerText
+})
+});
+
+const scoreData = await scoreRes.json();
+
+/* SAFE SCORE EXTRACTION */
+
+let numericScore = 0;
+
+if (typeof scoreData.score === "number") {
+numericScore = scoreData.score;
+}
+else if (typeof scoreData.score === "string") {
+numericScore = parseFloat(scoreData.score);
+}
+else if (typeof scoreData.score === "object") {
+numericScore =
+scoreData.score.value ||
+scoreData.score.score ||
+Object.values(scoreData.score)[0] ||
+0;
+}
+
+numericScore = Number(numericScore) || 0;
+
+scoresRef.current.push(numericScore);
+
+addAI(`Score: ${numericScore}/10`);
+
+/* ---------- NEXT QUESTION ---------- */
+
+const nextIndex = currentQRef.current + 1;
+
+console.log("Next:", nextIndex, "Total:", questionsRef.current.length);
+
+if (nextIndex < questionsRef.current.length) {
+
+setTimeout(() => {
+askQuestion(nextIndex);
+}, 800);
+
+}
+else {
+
+finishInterview();
+
+}
+
+return answerText;
+
+}
+catch (err) {
+
+console.error(err);
+clearInterval(timerRef.current);
+setShowPopup(false);
+return "";
+
+}
+
+}
+
+
+/* ================= FINISH ================= */
+
+async function finishInterview() {
+
+if (isEndingRef.current) return;
+
+isEndingRef.current = true;
+
+stopRecording();
+
+const res = await fetch("/api/interview/finish", {
+method: "POST",
+headers: { "Content-Type": "application/json" },
+body: JSON.stringify({
+scores: scoresRef.current
+}),
+});
+
+const data = await res.json();
+
+addAI(`Final Score: ${Number(data.finalScore).toFixed(2)}/10`);
+
+speechSynthesis.cancel();
+
+const utterance = new SpeechSynthesisUtterance(
+`Your final score is ${Number(data.finalScore).toFixed(2)}`
+);
+
+speechSynthesis.speak(utterance);
+
+}
+
+
+/* ================= MEDIA ================= */
+
+async function initMedia() {
+
+const stream =
+await navigator.mediaDevices.getUserMedia({
+video: true,
+audio: true
+});
+
+streamRef.current = stream;
+
+if (videoRef.current) {
+videoRef.current.srcObject = stream;
+}
+
+}
+
+async function loadModels() {
+await faceapi.nets.tinyFaceDetector.loadFromUri("/models");
+}
+
+async function detectFace() {
+
+if (!videoRef.current || isEndingRef.current) return;
+
+const detections =
+await faceapi.detectAllFaces(
+videoRef.current,
+new faceapi.TinyFaceDetectorOptions()
+);
+
+if (videoContainerRef.current) {
+videoContainerRef.current.style.border =
+detections.length
+? "5px solid green"
+: "5px solid red";
+}
+
+requestAnimationFrame(detectFace);
+
+}
+
+
+/* ================= CLEANUP ================= */
+
+function cleanup() {
+
+clearInterval(timerRef.current);
+
+stopRecording();
+
+if (streamRef.current) {
+streamRef.current.getTracks()
+.forEach(track => track.stop());
+}
+
+}
+
+function endInterview() {
+
+isEndingRef.current = true;
+
+cleanup();
+
+router.push("/");
+
+}
+
+
+/* ================= UI ================= */
+
+return (
+
+<div className="h-screen bg-black text-white p-6 flex flex-col">
+
+<h1 className="text-xl mb-4">
+Live Interview
+</h1>
+
+<div className="grid md:grid-cols-3 gap-6 flex-1">
+
+<div className="border rounded-xl p-4 flex flex-col items-center justify-center">
+
+<img src="/ai-avatar.png"
+className="w-40 h-40 mb-4"
+/>
+
+<p>AI Interviewer</p>
+
+</div>
+
+<div
+ref={videoContainerRef}
+className="border-4 rounded-xl p-2"
+>
+
+<video
+ref={videoRef}
+autoPlay
+muted
+playsInline
+className="w-full h-full"
+/>
+
+</div>
+
+<div className="border rounded-xl p-4 flex flex-col">
+
+<div className="flex-1 overflow-y-auto space-y-2">
+
+{messages.map((m, i) => (
+<div key={i}>
+{m.sender === "ai" ? "🤖 " : "🧑 "}
+{m.text}
+</div>
+))}
+
+</div>
+
+</div>
+
+</div>
+
+<div className="mt-4 flex justify-between">
+
+<button
+onClick={endInterview}
+className="bg-red-600 px-4 py-2 rounded"
+>
+End
+</button>
+
+<button
+onClick={stopRecording}
+className="bg-green-600 px-4 py-2 rounded"
+>
+Submit Audio
+</button>
+
+</div>
+
+{showPopup && (
+<div className="fixed inset-0 bg-black/70 flex items-center justify-center">
+Processing… {timer}s
+</div>
+)}
+
+</div>
+
+);
+
 }

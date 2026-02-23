@@ -1,0 +1,55 @@
+section,question
+1,What is HTML?
+1,What is CSS?
+1,What is JavaScript?
+1,What is DOM?
+1,What is Flexbox?
+1,What is Grid?
+1,What is responsive design?
+1,What is semantic HTML?
+1,What is event bubbling?
+1,What is event delegation?
+
+2,What is React?
+2,What is component?
+2,What is state?
+2,What is props?
+2,What is useEffect?
+2,What is useState?
+2,What is virtual DOM?
+2,What is key in React?
+2,What is JSX?
+2,What is lifecycle?
+
+3,What is Next.js?
+3,What is SSR?
+3,What is SSG?
+3,What is routing?
+3,What is API route?
+3,What is hydration?
+3,What is middleware?
+3,What is dynamic routing?
+3,What is layout?
+3,What is optimization?
+
+4,What is Tailwind?
+4,What is Bootstrap?
+4,What is CSS module?
+4,What is styled components?
+4,What is animation?
+4,What is accessibility?
+4,What is performance optimization?
+4,What is lazy loading?
+4,What is bundling?
+4,What is tree shaking?
+
+5,What is testing?
+5,What is Jest?
+5,What is Cypress?
+5,What is debugging?
+5,What is ESLint?
+5,What is Prettier?
+5,What is deployment?
+5,What is Vercel?
+5,What is Netlify?
+5,What is CDN?

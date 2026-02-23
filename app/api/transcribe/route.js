@@ -4,7 +4,11 @@ export async function POST(req) {
   try {
     console.log("🟢 Transcribe API hit");
 
-    const audioBuffer = await req.arrayBuffer();
+    const formData = await req.formData();
+const file = formData.get("file");
+
+const audioBuffer = await file.arrayBuffer();
+
     console.log("🟢 Audio size:", audioBuffer.byteLength);
 
     const uploadRes = await fetch("https://api.assemblyai.com/v2/upload", {
