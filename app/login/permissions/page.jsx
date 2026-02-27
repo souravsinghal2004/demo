@@ -4,8 +4,19 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 
+
+import { useSearchParams } from "next/navigation";
+
+
 export default function InterviewPage() {
+
+  const searchParams = useSearchParams();
+const jobId = searchParams.get("jobId");
+const title = searchParams.get("title");
   const { isLoaded, isSignedIn } = useUser();
+
+
+
   const router = useRouter();
 
   const videoRef = useRef(null);
@@ -92,6 +103,7 @@ export default function InterviewPage() {
 
   if (!isLoaded || !isSignedIn) return null;
 
+
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
       <div className="bg-white max-w-3xl w-full p-8 rounded-lg shadow-sm">
@@ -148,7 +160,7 @@ export default function InterviewPage() {
 
           <button
   disabled={!mediaAllowed}
-  onClick={() => router.push("/login/live")}
+  onClick={() => router.push(`/login/live?jobId=${jobId}&title=${encodeURIComponent(title)}`)}
   className={`px-6 py-2 rounded-md text-white ${
     mediaAllowed
       ? "bg-blue-600 hover:bg-blue-700"

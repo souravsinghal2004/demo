@@ -3,11 +3,14 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import * as faceapi from "face-api.js";
-
+import { useSearchParams } from "next/navigation";
 export default function LiveInterviewPage() {
 
 const router = useRouter();
+const searchParams = useSearchParams();
+const jobId = searchParams.get("jobId");
 
+const jobTitle = searchParams.get("title");
 const [messages, setMessages] = useState([]);
 const [recording, setRecording] = useState(false);
 const [showPopup, setShowPopup] = useState(false);
@@ -26,6 +29,13 @@ const isEndingRef = useRef(false);
 
 
 /* ================= INIT ================= */
+
+function formatTitleToFileName(title) {
+  return title
+    ?.toLowerCase()
+    .replace(/\s+/g, "_")
+    .replace(/[^a-z0-9_]/g, "");
+}
 
 useEffect(() => {
 
@@ -54,20 +64,33 @@ cleanup();
 
 async function loadQuestions() {
 
-const res = await fetch("/api/interview/start", {
-method: "POST",
-headers: { "Content-Type": "application/json" },
-body: JSON.stringify({ job: "backend" }),
-});
+  if (!jobId) {
+    console.error("No jobId found in URL");
+    return;
+  }
 
-const data = await res.json();
+  // Fetch job from DB using jobId
+  const jobRes = await fetch(`/api/jobs/${jobId}`);
+  const jobData = await jobRes.json();
 
-questionsRef.current = data.questions || [];
+  const actualTitle = jobData.title;
 
-console.log("Loaded questions:", questionsRef.current.length);
+  if (!actualTitle) {
+    console.error("Job title not found in DB");
+    return;
+  }
 
-askQuestion(0);
+  const res = await fetch("/api/interview/start", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ job: actualTitle }),
+  });
 
+  const data = await res.json();
+
+  questionsRef.current = data.questions || [];
+
+  askQuestion(0);
 }
 
 function askQuestion(index) {

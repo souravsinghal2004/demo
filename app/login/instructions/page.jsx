@@ -3,10 +3,25 @@
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+
+
+
+
+
+
+
+
 
 export default function InterviewInstructionsPage() {
+
+  const searchParams = useSearchParams();
+const title = searchParams.get("title");
+
   const { isLoaded, isSignedIn } = useUser();
   const router = useRouter();
+
+  const jobId = searchParams.get("jobId");
 
   useEffect(() => {
     if (isLoaded && !isSignedIn) {
@@ -49,7 +64,7 @@ export default function InterviewInstructionsPage() {
           </button>
 
           <button
-            onClick={() => router.push("/login/permissions")}
+            onClick={() => router.push(`/login/permissions?jobId=${jobId}&title=${encodeURIComponent(title)}`)}
             className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
           >
             Start Interview

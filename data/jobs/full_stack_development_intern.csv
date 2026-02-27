@@ -1,0 +1,55 @@
+section,question
+1,Explain how Node.js handles multiple requests at the same time.
+1,What happens internally when a request reaches an Express server?
+1,Explain the phases of the event loop in simple terms.
+1,How does middleware work in Express lifecycle?
+1,What makes a REST API truly RESTful?
+1,How does NPM manage dependencies and versions?
+1,What problems can callbacks create in large applications?
+1,How do promises improve asynchronous code?
+1,What actually happens when we use async and await?
+1,Explain how JWT authentication works in a backend system.
+
+2,What is the fundamental difference between MongoDB and relational databases?
+2,How does Mongoose help in structuring MongoDB data?
+2,Why is indexing important in databases?
+2,In what situations can aggregation be useful?
+2,Why is schema design important even in NoSQL databases?
+2,When would choosing NoSQL be a bad decision?
+2,How does replication improve database reliability?
+2,When is sharding necessary?
+2,Why is MongoDB called a document-based database?
+2,Why does MongoDB use BSON instead of pure JSON?
+
+3,Explain authentication vs authorization with a real example.
+3,Explain complete JWT login flow step by step.
+3,Where should JWT tokens be stored and why?
+3,Why do we hash passwords instead of encrypting them?
+3,Why is bcrypt better than simple hashing algorithms?
+3,How does session-based authentication differ from token-based?
+3,How can cookies become a security risk?
+3,How does OAuth login work conceptually?
+3,What is the difference between access token and refresh token?
+3,What security practices should every backend follow?
+
+4,What problems does microservice architecture solve?
+4,What are the limitations of monolithic architecture?
+4,How does Docker help developers and DevOps teams?
+4,What is the purpose of CI/CD in modern development?
+4,How does load balancing improve system performance?
+4,When does caching significantly improve performance?
+4,How does Redis improve backend speed?
+4,Why do large systems use an API Gateway?
+4,How does rate limiting protect an API?
+4,What role does a reverse proxy play in backend systems?
+
+5,What does scalability mean in real backend systems?
+5,Explain horizontal vs vertical scaling in practical terms.
+5,Why are logging and monitoring both important?
+5,What kind of issues can monitoring help detect?
+5,When is serverless not a good choice?
+5,What is the purpose of AWS EC2?
+5,When should S3 be used in an application?
+5,How does CDN reduce latency for users?
+5,Why is deployment strategy important?
+5,Explain the complete lifecycle of deploying a backend application.
