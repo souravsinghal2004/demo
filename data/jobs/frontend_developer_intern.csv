@@ -1,0 +1,55 @@
+section,question
+1,Explain how the browser renders a webpage from URL to screen.
+1,What happens internally when we type a URL in the browser?
+1,How does the DOM tree get constructed?
+1,What is the difference between reflow and repaint?
+1,How does JavaScript execution block rendering?
+1,What is the difference between synchronous and asynchronous JavaScript?
+1,How does the browser handle multiple JS tasks at once?
+1,What are the phases of the event loop in the browser?
+1,Why is understanding closures important in frontend development?
+1,How does memory management work in JavaScript?
+
+2,How does React's Virtual DOM improve performance?
+2,What problem does reconciliation solve in React?
+2,How does component re-rendering actually work?
+2,Why should keys be unique in React lists?
+2,How does useEffect manage side effects internally?
+2,What problems can arise from improper state management?
+2,What is prop drilling and how can it be avoided?
+2,How does Context API work under the hood?
+2,Why is immutability important in React?
+2,How does React batching improve performance?
+
+3,Explain SSR vs CSR with real-world use cases.
+3,How does hydration work in Next.js?
+3,Why does SEO improve with SSR?
+3,What is static site generation and when should it be used?
+3,How does routing work in modern frontend frameworks?
+3,What are the benefits of code splitting?
+3,How does lazy loading improve performance?
+3,What causes large bundle sizes?
+3,How does tree shaking reduce bundle size?
+3,Why is performance optimization critical in frontend apps?
+
+4,What is the difference between Flexbox and Grid in practical layouts?
+4,How does responsive design improve user experience?
+4,What are common accessibility mistakes in frontend?
+4,How does semantic HTML improve SEO and accessibility?
+4,What is the impact of large images on performance?
+4,How does Lighthouse measure performance?
+4,What are Core Web Vitals?
+4,How does browser caching work?
+4,What is debouncing and where is it useful?
+4,How does throttling differ from debouncing?
+
+5,How do you debug a production frontend issue?
+5,What tools are available in Chrome DevTools?
+5,How does source map help in debugging?
+5,What is version control workflow in teams?
+5,How does CI/CD help frontend teams?
+5,What is the difference between staging and production?
+5,How does deployment on Vercel work?
+5,Why is environment variable management important?
+5,What are common security risks in frontend?
+5,Explain the lifecycle of a feature from development to deployment.

@@ -1,5 +1,6 @@
 "use client";
 
+import { Header } from "@/components/Navbar";
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -17,10 +18,12 @@ export default function ProfilePage() {
   if (!isLoaded || !isSignedIn) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gray-50 bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100">
+<Header/>
 
+<div className="flex">
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r px-6 py-8">
+      <aside className="w-64 bg-white border-r px-6 py-8 bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100">
         <h2 className="text-xl font-bold text-blue-600 mb-8">
           Candidate Panel
         </h2>
@@ -76,8 +79,10 @@ export default function ProfilePage() {
           <button className="bg-blue-600 text-white px-5 py-2 rounded-md hover:bg-blue-700">
             Upload Resume
           </button>
-        </div>
+          </div>
+        
       </main>
+      </div>
     </div>
   );
 }

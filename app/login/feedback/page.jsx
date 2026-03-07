@@ -3,6 +3,7 @@
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { Header } from "@/components/Navbar";
 
 export default function FeedbackPage() {
   const { isLoaded, isSignedIn } = useUser();
@@ -17,10 +18,11 @@ export default function FeedbackPage() {
   if (!isLoaded || !isSignedIn) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-
+    <div className="min-h-screen bg-gray-50  bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100">
+ <Header />
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r px-6 py-8">
+      <div className=" flex">
+      <aside className="w-64 bg-white border-r px-6 py-8 bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100">
         <h2 className="text-xl font-bold text-blue-600 mb-8">
           Candidate Panel
         </h2>
@@ -87,6 +89,7 @@ export default function FeedbackPage() {
           Final hiring decisions are made by recruiters.
         </p>
       </main>
+      </div>
     </div>
   );
 }
