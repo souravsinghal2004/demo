@@ -13,7 +13,9 @@ export default function InterviewPage() {
   const searchParams = useSearchParams();
 const jobId = searchParams.get("jobId");
 const title = searchParams.get("title");
-  const { isLoaded, isSignedIn } = useUser();
+  
+const { isLoaded, isSignedIn, user } = useUser();
+  
 
 
 
@@ -160,7 +162,12 @@ const title = searchParams.get("title");
 
           <button
   disabled={!mediaAllowed}
-  onClick={() => router.push(`/login/live?jobId=${jobId}&title=${encodeURIComponent(title)}`)}
+ onClick={() => {
+  const candidateName = encodeURIComponent(user?.fullName || "Unknown");
+  router.push(
+    `/login/live?jobId=${jobId}&title=${encodeURIComponent(title)}&name=${candidateName}`
+  );
+}}
   className={`px-6 py-2 rounded-md text-white ${
     mediaAllowed
       ? "bg-blue-600 hover:bg-blue-700"

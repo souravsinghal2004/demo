@@ -29,17 +29,17 @@ Stay focused on camera
 </div>
 
 
-{/* MAIN GRID */}
+{/* TOP SECTION */}
 
-<div className="grid lg:grid-cols-3 gap-6 h-[75vh]">
+<div className="grid lg:grid-cols-3 gap-6 mb-6">
 
-{/* AI INTERVIEWER */}
+{/* AI VIDEO */}
 
 <div className="bg-slate-800/40 backdrop-blur rounded-2xl p-6 flex flex-col items-center justify-center shadow-xl">
 
 <img
 src="/ai-avatar.png"
-className="w-40 h-40 rounded-full border-4 border-blue-500 shadow-lg mb-4"
+className="w-32 h-32 rounded-full border-4 border-blue-500 shadow-lg mb-4"
 />
 
 <h2 className="text-lg font-semibold">
@@ -47,13 +47,13 @@ AI Interviewer
 </h2>
 
 <p className="text-sm opacity-70 mt-2 text-center">
-Listen carefully and answer clearly
+Listening to your answer
 </p>
 
 </div>
 
 
-{/* CAMERA */}
+{/* USER VIDEO */}
 
 <div
 ref={videoContainerRef}
@@ -61,25 +61,48 @@ className="relative rounded-2xl overflow-hidden border-4 border-red-500 shadow-x
 >
 
 <video
-  ref={videoRef}
-  autoPlay
-  muted
-  playsInline
-  className="w-full h-full object-cover scale-x-[-1]"
+ref={videoRef}
+autoPlay
+muted
+playsInline
+className="w-full h-full object-cover scale-x-[-1]"
 />
 
 <div className="absolute bottom-3 right-3 bg-black/60 px-3 py-1 rounded text-sm">
-Camera
+You
 </div>
 
 </div>
 
 
-{/* CHAT PANEL */}
+{/* CONTROLS */}
 
-<div className="bg-slate-800/40 backdrop-blur rounded-2xl p-5 flex flex-col shadow-xl">
+<div className="bg-slate-800/40 backdrop-blur rounded-2xl p-6 flex flex-col justify-center items-center shadow-xl space-y-4">
 
-<h2 className="mb-3 text-lg font-semibold">
+<button
+onClick={stopRecording}
+className="w-full px-6 py-3 bg-green-600 hover:bg-green-700 rounded-xl font-semibold transition"
+>
+Submit Answer
+</button>
+
+<button
+onClick={endInterview}
+className="w-full px-6 py-3 bg-red-600 hover:bg-red-700 rounded-xl font-semibold transition"
+>
+End Interview
+</button>
+
+</div>
+
+</div>
+
+
+{/* CHAT AREA */}
+
+<div className="bg-slate-800/40 backdrop-blur rounded-2xl p-6 shadow-xl h-[40vh] flex flex-col">
+
+<h2 className="mb-4 text-lg font-semibold">
 Interview Chat
 </h2>
 
@@ -89,7 +112,7 @@ Interview Chat
 
 <div
 key={i}
-className={`p-3 rounded-lg text-sm max-w-[85%] ${
+className={`p-3 rounded-lg text-sm max-w-[70%] ${
 m.sender === "ai"
 ? "bg-blue-600 self-start"
 : "bg-green-600 self-end ml-auto"
@@ -104,29 +127,6 @@ m.sender === "ai"
 ))}
 
 </div>
-
-</div>
-
-</div>
-
-
-{/* CONTROLS */}
-
-<div className="flex justify-center gap-6 mt-8">
-
-<button
-onClick={stopRecording}
-className="px-6 py-3 bg-green-600 hover:bg-green-700 rounded-xl font-semibold transition"
->
-Submit Answer
-</button>
-
-<button
-onClick={endInterview}
-className="px-6 py-3 bg-red-600 hover:bg-red-700 rounded-xl font-semibold transition"
->
-End Interview
-</button>
 
 </div>
 

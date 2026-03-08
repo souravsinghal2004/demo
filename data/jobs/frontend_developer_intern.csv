@@ -1,4 +1,4 @@
-section,question
+clearsection,question
 1,Explain how the browser renders a webpage from URL to screen.
 1,What happens internally when we type a URL in the browser?
 1,How does the DOM tree get constructed?

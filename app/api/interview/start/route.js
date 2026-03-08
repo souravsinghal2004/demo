@@ -1,54 +1,45 @@
-import { NextResponse } from "next/server";
-import { getQuestionsByJob } from "@/app/lib/csv";
+// app/api/interview/start/route.js
+import { connectDB } from "@/app/lib/mongo";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
 export async function POST(req) {
   try {
-    const body = await req.json();   // ✅ read request body
-    const { job } = body;            // ✅ extract job
+    const { job, candidateName, candidateRole } = await req.json();
 
-    if (!job) {
-      return NextResponse.json(
-        { error: "Job title missing" },
-        { status: 400 }
+    if (!candidateName || !job) {
+      return new Response(
+        JSON.stringify({ error: "Missing candidateName or job" }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }
 
-    const formattedJob = job
-      .toLowerCase()
-      .replace(/\s+/g, "_");
+    await connectDB();
 
-    console.log("Job received:", job);
-    console.log("Formatted:", formattedJob);
+    // Generate greeting
+    const greetResult = await model.generateContent(
+      `You are a polite AI interviewer. Greet the candidate named ${candidateName} for the role ${candidateRole || "the applied role"}.`
+    );
+    const greeting = (await greetResult.response).text();
 
-    const sections = await getQuestionsByJob(formattedJob);
+    // Generate first question
+    const q1Result = await model.generateContent(
+      `Candidate ${candidateName} applied for ${candidateRole || "this role"} (${job}). Generate the first interview question relevant to their role. Return only the question text.`
+    );
+    const firstQuestion = (await q1Result.response).text();
 
-    const selectedQuestions = [];
+    return new Response(
+      JSON.stringify({ greeting, questions: [firstQuestion] }),
+      { status: 200, headers: { "Content-Type": "application/json" } }
+    );
 
-    for (let i = 1; i <= 5; i++) {
-      const arr = sections[i];
-
-      if (!arr || arr.length === 0) {
-        console.log(`Section ${i} empty`);
-        continue;
-      }
-
-      const randomIndex =
-        Math.floor(Math.random() * arr.length);
-
-      selectedQuestions.push(arr[randomIndex]);
-    }
-
-    console.log("Total selected:", selectedQuestions.length);
-
-    return NextResponse.json({
-      questions: selectedQuestions
-    });
-
-  } catch (error) {
-    console.error(error);
-    return NextResponse.json(
-      { error: "Failed to start interview" },
-      { status: 500 }
+  } catch (err) {
+    console.error("Interview start error:", err);
+    return new Response(
+      JSON.stringify({ error: err.message }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
 }

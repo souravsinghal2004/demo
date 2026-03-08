@@ -1,27 +1,16 @@
 "use client";
 
 import { useUser } from "@clerk/nextjs";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, Suspense } from "react";
 
-
-
-
-
-
-
-
-
-export default function InterviewInstructionsPage() {
-
+function InstructionsContent() {
   const searchParams = useSearchParams();
-const title = searchParams.get("title");
+  const title = searchParams.get("title");
+  const jobId = searchParams.get("jobId");
 
   const { isLoaded, isSignedIn } = useUser();
   const router = useRouter();
-
-  const jobId = searchParams.get("jobId");
 
   useEffect(() => {
     if (isLoaded && !isSignedIn) {
@@ -46,8 +35,6 @@ const title = searchParams.get("title");
 
         <ul className="space-y-4 text-gray-700 text-sm">
           <li>✅ Ensure a stable internet connection.</li>
-    
-
           <li>✅ Answer all questions honestly and clearly.</li>
           <li>✅ You may be asked technical, logical, or role-specific questions.</li>
           <li>✅ Your responses will be evaluated by AI for early-stage assessment.</li>
@@ -64,7 +51,9 @@ const title = searchParams.get("title");
           </button>
 
           <button
-            onClick={() => router.push(`/login/permissions?jobId=${jobId}&title=${encodeURIComponent(title)}`)}
+            onClick={() =>
+              router.push(`/login/permissions?jobId=${jobId}&title=${encodeURIComponent(title)}`)
+            }
             className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
           >
             Start Interview
@@ -77,5 +66,13 @@ const title = searchParams.get("title");
         </p>
       </div>
     </div>
+  );
+}
+
+export default function InterviewInstructionsPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <InstructionsContent />
+    </Suspense>
   );
 }
