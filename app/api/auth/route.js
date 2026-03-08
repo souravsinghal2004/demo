@@ -1,9 +1,9 @@
 // pages/api/auth/getUser.js
-import clientPromise from "@/app/lib/mongo";
+import { connectDB } from "@/app/lib/mongo";
 
 export default async function handler(req, res) {
   try {
-    const client = await clientPromise;
+    const client = await connectDB;
     const db = client.db("yourDbName");
 
     const user = await db.collection("users").findOne({
