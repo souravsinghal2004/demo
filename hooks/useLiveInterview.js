@@ -57,31 +57,56 @@ export default function useLiveInterview() {
 
   /* ================= QUESTIONS ================= */
   async function loadQuestions() {
-    if (!jobId || !candidateName) return;
+  if (!jobId || !candidateName) return;
 
-    // Fetch job details from your DB
-    const jobRes = await fetch(`/api/jobs/${jobId}`);
-    const jobData = await jobRes.json();
+  // Fetch job details from DB
+  const jobRes = await fetch(`/api/jobs/${jobId}`);
+  const jobData = await jobRes.json();
 
-    // Start interview by sending candidateName & role
-    const res = await fetch("/api/interview/start", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        job: jobData.title,
-        candidateName: candidateName,
-        candidateRole: candidateRole,
-      }),
-    });
+  // Start interview
+  const res = await fetch("/api/interview/start", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      job: jobData.title,
+      candidateName: candidateName,
+      candidateRole: candidateRole,
+    }),
+  });
 
-    const data = await res.json();
+  const data = await res.json();
 
-    // Push greeting first
-    if (data.greeting) addAI(data.greeting);
+  // Save questions
+  questionsRef.current = data.questions || [];
 
-    questionsRef.current = data.questions || [];
+  // If greeting exists → show + speak it
+  if (data.greeting) {
+    addAI(data.greeting);
+
+    speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(data.greeting);
+    const voice = getIndianMaleVoice();
+    if (voice) utterance.voice = voice;
+
+    utterance.rate = 0.85;
+    utterance.pitch = 0.8;
+    utterance.volume = 1;
+
+    // After greeting finishes → ask first question
+    utterance.onend = () => {
+      askQuestion(0);
+    };
+
+    setTimeout(() => {
+      speechSynthesis.speak(utterance);
+    }, 500);
+
+  } else {
+    // If no greeting → start interview directly
     askQuestion(0);
   }
+}
 
   function getIndianMaleVoice() {
     const voices = speechSynthesis.getVoices();
@@ -219,7 +244,9 @@ export default function useLiveInterview() {
     scoresRef.current.push(scoreData.score);
 
 // STOP after 6 questions
-if (currentQRef.current + 1 >= 6) {
+
+
+if (currentQRef.current + 1 >= 2) {
   finishInterview();
   return answerText;
 }
@@ -247,11 +274,19 @@ if (scoreData.nextQuestion) {
     isEndingRef.current = true;
     stopRecording();
 
-    const res = await fetch("/api/interview/finish", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ scores: scoresRef.current }),
-    });
+   const res = await fetch("/api/interview/finish", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    candidateName,
+    jobTitle: title,
+    questions: questionsRef.current,
+    answers: messages
+      .filter((m) => m.sender === "user")
+      .map((m) => m.text),
+    scores: scoresRef.current,
+  }),
+});
 
     const data = await res.json();
     addAI(`Final Score: ${Number(data.finalScore).toFixed(2)}/10`);
