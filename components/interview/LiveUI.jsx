@@ -66,22 +66,22 @@ export default function LiveUI({
           </div>
 
           {/* MESSAGE AREA */}
-          <div className="flex flex-col space-y-4">
+         <div className="flex flex-col space-y-4">
 
-            {messages.map((m, i) => (
-              <div
-                key={i}
-                className={`p-4 rounded-lg text-sm max-w-[90%] ${
-                  m.sender === "ai"
-                    ? "bg-blue-100 text-blue-900"
-                    : "bg-green-100 text-green-900 self-end"
-                }`}
-              >
-                {m.sender === "ai" ? "🤖 " : "🧑 "} {m.text}
-              </div>
-            ))}
+  {messages.slice(-2).map((m, i) => (
+    <div
+      key={i}
+      className={`p-4 rounded-lg text-sm max-w-[90%] ${
+        m.sender === "ai"
+          ? "bg-blue-100 text-blue-900"
+          : "bg-green-100 text-green-900 self-end"
+      }`}
+    >
+      {m.sender === "ai" ? "🤖 " : "🧑 "} {m.text}
+    </div>
+  ))}
 
-          </div>
+</div>
 
           {/* NOTE SECTION */}
           <div className="bg-blue-100 p-5 rounded-xl text-sm text-blue-900 mt-6">
