@@ -11,9 +11,14 @@ function LiveInterviewContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  // Updated hook to include showResult and averageScore
   const interview = useLiveInterview(router, searchParams);
 
-  return <LiveUI {...interview} />;
+  return (
+    <LiveUI
+      {...interview} // spread all returned hook values
+    />
+  );
 }
 
 export default function LiveInterviewPage() {

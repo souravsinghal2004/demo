@@ -1,160 +1,202 @@
 "use client";
 
+import React from "react";
+import ResultPopup from "../ResultPopup";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+
 export default function LiveUI({
   messages,
   videoRef,
   videoContainerRef,
-  showPopup,
-  timer,
   stopRecording,
-  endInterview
+  endInterview,
+  showResult,
+  averageScore,
+  setShowResult,
+  processing,
+  setupPopup,
+  title,
 }) {
 
-return (
+  const router = useRouter();
 
-<div className="min-h-screen bg-gradient-to-br from-slate-900 to-black text-white p-6">
+  const [showEndPopup, setShowEndPopup] = useState(false);
+  const [countdown, setCountdown] = useState(3);
 
-{/* HEADER */}
+  useEffect(() => {
+    if (showEndPopup && countdown > 0) {
+      const timer = setTimeout(() => {
+        setCountdown((prev) => prev - 1);
+      }, 1000);
 
-<div className="flex justify-between items-center mb-6">
+      return () => clearTimeout(timer);
+    }
 
-<h1 className="text-2xl font-bold">
-AI Live Interview
-</h1>
+    if (countdown === 0) {
+      router.push("/login");
+    }
+  }, [showEndPopup, countdown, router]);
 
-<div className="text-sm opacity-70">
-Stay focused on camera
-</div>
+  return (
+    <div className="h-screen overflow-hidden bg-gradient-to-br from-gray-50 to-gray-200 text-gray-900 p-8 flex flex-col">
 
-</div>
+      {/* HEADER */}
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold text-gray-800">
+          AI Live Interview
+        </h1>
 
+        <div className="text-sm text-gray-500">
+          Stay focused on camera
+        </div>
+      </div>
 
-{/* TOP SECTION */}
+      {/* MAIN INTERVIEW AREA */}
+      <div className="flex flex-1 gap-10">
 
-<div className="grid lg:grid-cols-3 gap-6 mb-6">
+        {/* LEFT PANEL */}
+        <div className="flex flex-col justify-between w-1/2">
 
-{/* AI VIDEO */}
+          {/* Interview Role */}
+          <div className="mb-6">
+            <span className="px-4 py-2 bg-blue-500 text-white rounded-full text-sm font-semibold">
+              Interview for this { title}
+            </span>
+          </div>
 
-<div className="bg-slate-800/40 backdrop-blur rounded-2xl p-6 flex flex-col items-center justify-center shadow-xl">
+          {/* MESSAGE AREA */}
+          <div className="flex flex-col space-y-4">
 
-<img
-src="/ai-avatar.png"
-className="w-32 h-32 rounded-full border-4 border-blue-500 shadow-lg mb-4"
-/>
+            {messages.map((m, i) => (
+              <div
+                key={i}
+                className={`p-4 rounded-lg text-sm max-w-[90%] ${
+                  m.sender === "ai"
+                    ? "bg-blue-100 text-blue-900"
+                    : "bg-green-100 text-green-900 self-end"
+                }`}
+              >
+                {m.sender === "ai" ? "🤖 " : "🧑 "} {m.text}
+              </div>
+            ))}
 
-<h2 className="text-lg font-semibold">
-AI Interviewer
-</h2>
+          </div>
 
-<p className="text-sm opacity-70 mt-2 text-center">
-Listening to your answer
-</p>
+          {/* NOTE SECTION */}
+          <div className="bg-blue-100 p-5 rounded-xl text-sm text-blue-900 mt-6">
+            <b>⚠ Interview Rules</b>
 
-</div>
+            <p className="mt-2">
+              If you switch tabs, minimize the browser, or press the End Interview
+              button, the interview will automatically complete and may be marked
+              as <b>cheated</b>.
+            </p>
 
+            <p className="mt-2">
+              Please stay on this page until the interview finishes.
+            </p>
+          </div>
 
-{/* USER VIDEO */}
+        </div>
 
-<div
-ref={videoContainerRef}
-className="relative rounded-2xl overflow-hidden border-4 border-red-500 shadow-xl bg-black flex items-center justify-center"
+        {/* RIGHT PANEL (CAMERA) */}
+        <div
+          ref={videoContainerRef}
+          className="relative w-1/2 rounded-2xl overflow-hidden border-2 border-red-400 shadow-md bg-black flex items-center justify-center"
+        >
+          <video
+            ref={videoRef}
+            autoPlay
+            muted
+            playsInline
+            className="w-full h-full object-cover scale-x-[-1]"
+          />
+
+          <div className="absolute bottom-3 right-3 bg-white/80 px-3 py-1 rounded text-sm font-medium text-gray-900">
+            You
+          </div>
+        </div>
+
+      </div>
+
+      {/* BUTTONS */}
+      <div className="flex justify-between items-center mt-6">
+
+       <button
+  onClick={() => {
+    speechSynthesis.cancel();
+    setShowEndPopup(true);
+  }}
+  className="px-8 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-semibold transition"
 >
-
-<video
-ref={videoRef}
-autoPlay
-muted
-playsInline
-className="w-full h-full object-cover scale-x-[-1]"
-/>
-
-<div className="absolute bottom-3 right-3 bg-black/60 px-3 py-1 rounded text-sm">
-You
-</div>
-
-</div>
-
-
-{/* CONTROLS */}
-
-<div className="bg-slate-800/40 backdrop-blur rounded-2xl p-6 flex flex-col justify-center items-center shadow-xl space-y-4">
-
-<button
-onClick={stopRecording}
-className="w-full px-6 py-3 bg-green-600 hover:bg-green-700 rounded-xl font-semibold transition"
->
-Submit Answer
+  End Interview
 </button>
 
-<button
-onClick={endInterview}
-className="w-full px-6 py-3 bg-red-600 hover:bg-red-700 rounded-xl font-semibold transition"
->
-End Interview
-</button>
+        <button
+          onClick={stopRecording}
+          className="px-8 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-semibold transition"
+        >
+          Submit Answer
+        </button>
 
-</div>
+      </div>
 
-</div>
+      {/* RESULT POPUP */}
+      {showResult && (
+        <ResultPopup
+          score={averageScore}
+          onClose={() => setShowResult(false)}
+        />
+      )}
 
+      {/* SETUP POPUP */}
+      {setupPopup && (
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl shadow-md text-center">
+            <p className="text-lg font-semibold text-gray-800 mb-2">
+              Setting up your interview...
+            </p>
+            <p className="text-sm text-gray-500">Please wait</p>
+          </div>
+        </div>
+      )}
 
-{/* CHAT AREA */}
+      {/* PROCESSING POPUP */}
+      {processing && (
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl shadow-md text-center">
+            <p className="text-lg font-semibold text-gray-800 mb-2">
+              Processing voice...
+            </p>
+            <p className="text-sm text-gray-500">
+              Please wait while we analyze your answer
+            </p>
+          </div>
+        </div>
+      )}
 
-<div className="bg-slate-800/40 backdrop-blur rounded-2xl p-6 shadow-xl h-[40vh] flex flex-col">
+      {/* END INTERVIEW POPUP */}
+      {showEndPopup && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+          <div className="bg-white p-8 rounded-2xl shadow-xl text-center w-[350px]">
 
-<h2 className="mb-4 text-lg font-semibold">
-Interview Chat
-</h2>
+            <h2 className="text-2xl font-bold text-red-600 mb-3">
+              Interview Interrupted
+            </h2>
 
-<div className="flex-1 overflow-y-auto space-y-3 pr-2">
+            <p className="text-gray-600 mb-4">
+              Pushing back to home page in
+            </p>
 
-{messages.map((m, i) => (
+            <div className="text-4xl font-bold text-blue-600">
+              {countdown}
+            </div>
 
-<div
-key={i}
-className={`p-3 rounded-lg text-sm max-w-[70%] ${
-m.sender === "ai"
-? "bg-blue-600 self-start"
-: "bg-green-600 self-end ml-auto"
-}`}
->
+          </div>
+        </div>
+      )}
 
-{m.sender === "ai" ? "🤖 " : "🧑 "}
-{m.text}
-
-</div>
-
-))}
-
-</div>
-
-</div>
-
-
-{/* PROCESSING POPUP */}
-
-{showPopup && (
-
-<div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-
-<div className="bg-slate-800 p-8 rounded-xl text-center shadow-xl">
-
-<p className="text-lg font-semibold mb-2">
-Processing Response
-</p>
-
-<p className="text-sm opacity-70">
-{timer}s
-</p>
-
-</div>
-
-</div>
-
-)}
-
-</div>
-
-);
-
+    </div>
+  );
 }
