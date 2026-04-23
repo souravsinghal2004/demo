@@ -15,10 +15,10 @@ export function Header() {
 
       {/* Links */}
       <nav className="hidden md:flex items-center gap-8 text-gray-700">
-        <a href="#">Solutions</a>
-        <a href="#">Enterprise</a>
-        <a href="#">Resources</a>
-        <a href="#">Pricing</a>
+        <a href="/header/one">Solutions</a>
+        <a href="/header/two">Enterprise</a>
+        <a href="/header/three">Resources</a>
+        <a href="/header/four">Pricing</a>
       </nav>
 
       {/* Auth Buttons */}
